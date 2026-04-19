@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ferraria Cusco - ERP Integrado</title>
+<title>Ferraria Beaumont</title>
     <link rel="icon" type="image/png" href="https://i.imgur.com/bQAy1gG.png">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
@@ -205,10 +205,10 @@
 <body>
 
 <div id="auth-overlay">
-    <div class="auth-box" id="login-box">
+<div class="auth-box" id="login-box">
         <img src="https://i.imgur.com/bQAy1gG.png" class="auth-logo">
         <h2 style="margin:0 0 5px 0; color: var(--primary);">ACESSO RESTRITO</h2>
-        <p style="font-size: 0.8rem; color: #aaa; margin-bottom: 20px;">Ferraria Cusco - Oficial</p>
+        <p style="font-size: 0.8rem; color: #aaa; margin-bottom: 20px;">Ferraria Beaumont - Oficial</p>
         <input type="text" id="login-user" placeholder="Nome de Usuário">
         <input type="password" id="login-pass" placeholder="Senha">
         <button class="auth-btn-main" onclick="window.authLogin()">ENTRAR NO SISTEMA</button>
@@ -241,10 +241,10 @@
     </div>
 
     <header id="main-header" style="max-width: 1200px; width:100%;">
-        <div class="header-left">
-            <img src="https://i.imgur.com/bQAy1gG.png" alt="Logo Cusco" class="logo-ferraria">
+<div class="header-left">
+            <img src="https://i.imgur.com/bQAy1gG.png" alt="Logo Beaumont" class="logo-ferraria">
             <div class="header-text">
-                <h1 id="title-text">FERRARIA CUSCO</h1>
+                <h1 id="title-text">FERRARIA BEAUMONT</h1>
                 <small id="sub-text">REGISTRO DE PEDIDOS OFICIAL - 1905</small>
             </div>
         </div>
@@ -451,9 +451,9 @@
         <div class="catalog" id="catalog"></div>
 
         <aside class="cart-panel" id="cart-capture">
-            <div class="cart-header-internal">
+                <div class="cart-header-internal">
                 <img src="https://i.imgur.com/bQAy1gG.png" class="logo-cart">
-                <div class="title-cart" id="internal-title">FERRARIA CUSCO</div>
+                <div class="title-cart" id="internal-title">FERRARIA BEAUMONT</div>
                 <div class="subtitle-cart">Atendente: <span id="print-username"></span></div>
             </div>
 
@@ -671,12 +671,12 @@
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, query, where, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
     const firebaseConfig = {
-          apiKey: "AIzaSyBoX_SoV36u9DHTxRxrdnNceZe9J-EbCWM",
-          authDomain: "ferrariacusco.firebaseapp.com",
-          projectId: "ferrariacusco",
-          storageBucket: "ferrariacusco.firebasestorage.app",
-          messagingSenderId: "510224310237",
-          appId: "1:510224310237:web:88a3a7dba3ec79784ae034"
+          apiKey: "AIzaSyCJPQsSXu__yLRHFuEdXto3VsXKXUI-Kro",
+          authDomain: "ferraria-beaumont.firebaseapp.com",
+          projectId: "ferraria-beaumont",
+          storageBucket: "ferraria-beaumont.firebasestorage.app",
+          messagingSenderId: "1067817349891",
+          appId: "1:1067817349891:web:d5c77c6351309aef962f36"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -1506,9 +1506,9 @@
                         const corHeader = isContas ? "var(--contas)" : "var(--primary)";
 
                         htmlList += `<div class="fatura-card" id="fatura-card-${venda.docId}" style="background: var(--card);">
-                            <div class="print-header" id="print-header-${venda.docId}">
+                                <div class="print-header" id="print-header-${venda.docId}">
                                 <img src="https://i.imgur.com/bQAy1gG.png" style="width:60px;">
-                                <h4 style="margin:5px 0 0 0; color:${corHeader};">FERRARIA CUSCO</h4>
+                                <h4 style="margin:5px 0 0 0; color:${corHeader};">FERRARIA BEAUMONT</h4>
                                 <div style="font-size:0.8rem; color:#aaa; margin-top:10px; text-align:center; width:100%;"><b>${isContas?'FORNECEDOR':'CLIENTE'}:</b> ${venda.cliente_nome || 'N/I'}<br><b>FATURA:</b> ${venda.numero_pedido || 'N/I'}</div>
                             </div>
                             <div class="fatura-header"><span class="fatura-id" style="color:${corHeader};">📄 ${venda.numero_pedido || 'N/I'} ${filtro !== 'CLIENT_ONLY' ? ` - <span style="color:white">${venda.cliente_nome || 'N/I'}</span>` : ''}</span><span class="fatura-date">${venda.data || ''}</span></div>
