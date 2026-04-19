@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cantina do Retiro - Nuvem</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f4f9; color: #333; display: flex; flex-direction: column; height: 100vh; }
+        header { background-color: #2c3e50; color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+        .menu-botoes button { background-color: #34495e; color: white; border: 1px solid #ecf0f1; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold; margin-left: 10px; }
+        .menu-botoes button:hover { background-color: #ecf0f1; color: #2c3e50; }
+        .container { display: flex; flex: 1; padding: 1rem; gap: 1rem; overflow: hidden; }
+        .escondido { display: none !important; }
+        
+        /* Painéis */
+        .painel-produtos { flex: 2; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        .grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; margin-top: 1rem; overflow-y: auto; }
+        .btn-produto { background-color: #ecf0f1; border: 1px solid #bdc3c7; padding: 1rem; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background-color 0.2s; }
+        .btn-produto span { color: #27ae60; font-size: 0.9rem; display: block; margin-top: 5px; }
+        .btn-produto:hover { background-color: #d5dbdb; }
+        
+        /* Carrinho e Autocomplete */
+        .painel-carrinho { flex: 1; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        
+        .area-cliente { background-color: #ecf0f1; padding: 10px; border-radius: 6px; margin-bottom: 10px; position: relative; }
+        .area-cliente label { font-weight: bold; display: block; margin-bottom: 5px; color: #2c3e50; }
+        
+        #busca-cliente { width: 100%; padding: 10px; border-radius: 4px; border: 1px solid #bdc3c7; font-size: 1rem; }
+        
+        /* Estilo da lista flutuante de sugestões */
+        #lista-sugestoes { 
+            position: absolute; top: 100%; left: 10px; right: 10px; 
+            background: white; border: 1px solid #bdc3c7; border-top: none; 
+            max-height: 150px; overflow-y: auto; list-style: none; 
+            z-index: 100; border-radius: 0 0 6px 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        #lista-sugestoes li { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; font-weight: 500; }
+        #lista-sugestoes li:hover { background-color: #3498db; color: white; }
+
+        #lista-carrinho { list-style: none; flex: 1; overflow-y: auto; margin: 1rem 0; border: 1px solid #eee; padding: 0.5rem; border-radius: 4px; }
+        .item-vazio { text-align: center; color: #7f8c8d; font-style: italic; margin-top: 1rem; }
+        .resumo-pedido { border-top: 2px solid #ecf0f1; padding-top: 1rem; margin-bottom: 1rem; text-align: right; font-size: 1.2rem; }
+        #valor-total { color: #e74c3c; font-weight: bold; }
+        
+        /* Botões Pagamento */
+        .opcoes-pagamento { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .btn-pagar { padding: 1rem; border: none; border-radius: 6px; color: white; font-weight: bold; font-size: 1rem; cursor: pointer; }
+        .dinheiro { background-color: #27ae60; }
+        .pix { background-color: #3498db; }
+        .cartao { background-color: #f39c12; }
+        .pendurar { background-color: #95a5a6; grid-column: span 2; }
+        .btn-pagar:hover { opacity: 0.9; }
+        
+        /* Telas Genéricas (Relatórios e Clientes) */
+        .tela-conteudo { background: white; flex: 1; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); padding: 2rem; overflow-y: auto; width: 100%; }
+        .secao-conteudo { margin-bottom: 2rem; }
+        .secao-conteudo h3 { border-bottom: 2px solid #34495e; padding-bottom: 0.5rem; margin-bottom: 1rem; color: #2c3e50; }
+        
+        table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+        th, td { text-align: left; padding: 8px; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; }
+        .total-destaque { font-weight: bold; color: #e74c3c; font-size: 1.1rem; }
+        
+        /* Formulário Cliente */
+        .form-cliente { display: flex; gap: 10px; margin-bottom: 20px; }
+        .form-cliente input { flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        .form-cliente button { padding: 10px 20px; background-color: #27ae60; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        
+        #status-conexao { font-size: 0.8rem; color: #f1c40f; margin-left: 10px; font-weight: normal; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Cantina do Retiro <span id="status-conexao"></span></h1>
+        <div class="menu-botoes">
+            <span id="data-atual" style="margin-right: 20px;"></span>
+            <button onclick="window.alternarTela('caixa')">Caixa</button>
+            <button onclick="window.alternarTela('clientes')">Clientes</button>
+            <button onclick="window.alternarTela('relatorios')">Relatórios</button>
+        </div>
+    </header>
+
+    <main class="container" id="tela-caixa">
+        <section class="painel-produtos">
+            <h2>Produtos</h2>
+            <div id="grade-produtos" class="grade"></div>
+        </section>
+
+        <section class="painel-carrinho">
+            <h2>Pedido Atual</h2>
+            
+            <div class="area-cliente">
+                <label for="busca-cliente">Cliente (Pesquise pelo nome):</label>
+                <input type="text" id="busca-cliente" placeholder="Digite para buscar..." autocomplete="off">
+                <ul id="lista-sugestoes" class="escondido"></ul>
+            </div>
+
+            <ul id="lista-carrinho">
+                <li class="item-vazio">O carrinho está vazio.</li>
+            </ul>
+            <div class="resumo-pedido">
+                <h3>Total: <span id="valor-total">R$ 0,00</span></h3>
+            </div>
+            <div class="opcoes-pagamento">
+                <button class="btn-pagar dinheiro" onclick="window.processarPagamento('Dinheiro')">Dinheiro</button>
+                <button class="btn-pagar pix" onclick="window.processarPagamento('Pix')">Pix</button>
+                <button class="btn-pagar cartao" onclick="window.processarPagamento('Cartão')">Cartão</button>
+                <button class="btn-pagar pendurar" onclick="window.processarPagamento('Pendurado')">Pendurar (Fiado)</button>
+            </div>
+        </section>
+    </main>
+
+    <main class="container escondido" id="tela-clientes">
+        <div class="tela-conteudo">
+            <div style="max-width: 800px; margin: 0 auto; width: 100%;">
+                <h2>Gerenciar Clientes</h2>
+                <p style="margin-bottom: 2rem; color: #7f8c8d;">Cadastre os participantes para pesquisar no caixa.</p>
+                
+                <div class="form-cliente">
+                    <input type="text" id="novo-cliente-nome" placeholder="Digite o nome completo do cliente..." autocomplete="off">
+                    <button onclick="window.cadastrarCliente()">Cadastrar Cliente</button>
+                </div>
+
+                <div class="secao-conteudo">
+                    <h3>Lista de Clientes Cadastrados</h3>
+                    <table id="tabela-lista-clientes">
+                        <thead><tr><th>Nome</th></tr></thead>
+                        <tbody><tr><td>Carregando...</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <main class="container escondido" id="tela-relatorios">
+        <div class="tela-conteudo">
+            <div style="max-width: 800px; margin: 0 auto; width: 100%;">
+                <h2>Relatório de Vendas (Nuvem)</h2>
+                <p style="margin-bottom: 2rem; color: #7f8c8d;">Dados puxados diretamente do banco de dados Firebase.</p>
+                
+                <div class="secao-conteudo">
+                    <h3>Resumo Financeiro</h3>
+                    <p>Total Recebido (Dinheiro, Pix, Cartão): <span id="rel-total-recebido" class="total-destaque">R$ 0,00</span></p>
+                    <p>Total Pendurado (A Receber): <span id="rel-total-pendurado" class="total-destaque" style="color:#e67e22;">R$ 0,00</span></p>
+                </div>
+
+                <div class="secao-conteudo">
+                    <h3>Contas Penduradas (Fiado) por Cliente</h3>
+                    <table id="tabela-fiados">
+                        <thead><tr><th>Nome do Cliente</th><th>Valor Total Devido</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <div class="secao-conteudo">
+                    <h3>Histórico de Vendas</h3>
+                    <table id="tabela-historico">
+                        <thead><tr><th>Data/Hora</th><th>Método</th><th>Cliente</th><th>Valor</th></tr></thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                
+                <button onclick="window.limparDadosVendas()" style="background-color:#e74c3c; color:white; border:none; padding:10px; border-radius:4px; cursor:pointer; margin-top:20px;">Apagar Histórico de VENDAS no Banco</button>
+            </div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBRf7n_kUeobVTBzSdX4bE3Suuv9eUprmI",
+            authDomain: "caixa-sib.firebaseapp.com",
+            projectId: "caixa-sib",
+            storageBucket: "caixa-sib.firebasestorage.app",
+            messagingSenderId: "427204652375",
+            appId: "1:427204652375:web:41f4007cfaa9a726486212"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const produtos = [
+            { id: 1, nome: 'Refrigerante Lata', preco: 5.00 },
+            { id: 2, nome: 'Salgado Assado', preco: 6.00 },
+            { id: 3, nome: 'Salgado Frito', preco: 5.00 },
+            { id: 4, nome: 'Bolo Fatiado', preco: 4.00 },
+            { id: 5, nome: 'Água Mineral', preco: 2.00 },
+            { id: 6, nome: 'Suco de Caixinha', preco: 4.00 },
+            { id: 7, nome: 'Bombom', preco: 2.50 },
+            { id: 8, nome: 'Halls/Bala', preco: 2.00 },
+            { id: 9, nome: 'Cachorro Quente', preco: 8.00 },
+            { id: 10, nome: 'Misto Quente', preco: 7.00 }
+        ];
+
+        let carrinho = [];
+        let total = 0;
+        let listaClientesCache = []; 
+
+        // --- INICIALIZAÇÃO E CARRINHO ---
+        window.iniciarSistema = function() {
+            document.getElementById('data-atual').textContent = new Date().toLocaleDateString('pt-BR');
+            const gradeProdutos = document.getElementById('grade-produtos');
+            gradeProdutos.innerHTML = '';
+            
+            produtos.forEach(produto => {
+                const btn = document.createElement('button');
+                btn.className = 'btn-produto';
+                btn.innerHTML = `${produto.nome} <span>R$ ${produto.preco.toFixed(2).replace('.', ',')}</span>`;
+                btn.onclick = () => window.adicionarAoCarrinho(produto);
+                gradeProdutos.appendChild(btn);
+            });
+
+            window.configurarPesquisaClientes();
+            window.buscarClientes();
+        };
+
+        window.adicionarAoCarrinho = function(produto) {
+            carrinho.push(produto);
+            window.atualizarCarrinho();
+        };
+
+        window.removerDoCarrinho = function(index) {
+            carrinho.splice(index, 1);
+            window.atualizarCarrinho();
+        };
+
+        window.atualizarCarrinho = function() {
+            const listaCarrinho = document.getElementById('lista-carrinho');
+            const valorTotalSpan = document.getElementById('valor-total');
+            listaCarrinho.innerHTML = '';
+            total = 0;
+
+            if (carrinho.length === 0) {
+                listaCarrinho.innerHTML = '<li class="item-vazio">O carrinho está vazio.</li>';
+                valorTotalSpan.textContent = 'R$ 0,00';
+                return;
+            }
+
+            carrinho.forEach((item, index) => {
+                total += item.preco;
+                const li = document.createElement('li');
+                li.style.display = 'flex'; li.style.justifyContent = 'space-between';
+                li.style.marginBottom = '8px'; li.style.borderBottom = '1px solid #eee'; li.style.paddingBottom = '8px';
+                li.innerHTML = `<span>${item.nome}</span> <div><span>R$ ${item.preco.toFixed(2).replace('.', ',')}</span> <button onclick="window.removerDoCarrinho(${index})" style="margin-left: 15px; color: #e74c3c; background: none; border: none; font-weight: bold; cursor: pointer;">X</button></div>`;
+                listaCarrinho.appendChild(li);
+            });
+            valorTotalSpan.textContent = `R$ ${total.toFixed(2).replace('.', ',')}`;
+        };
+
+        // --- SISTEMA DE BUSCA/AUTOCOMPLETE ---
+        window.configurarPesquisaClientes = function() {
+            const inputBusca = document.getElementById('busca-cliente');
+            const listaSugestoes = document.getElementById('lista-sugestoes');
+
+            // Evento enquanto o usuário digita
+            inputBusca.addEventListener('input', function() {
+                const termo = this.value.toLowerCase().trim();
+                listaSugestoes.innerHTML = ''; // Limpa a lista atual
+
+                if (!termo) {
+                    listaSugestoes.classList.add('escondido');
+                    return;
+                }
+
+                // Filtra os clientes que contém o termo digitado
+                const filtrados = listaClientesCache.filter(c => c.nome.toLowerCase().includes(termo));
+                
+                if (filtrados.length > 0) {
+                    listaSugestoes.classList.remove('escondido'); // Mostra a lista
+                    filtrados.forEach(c => {
+                        const li = document.createElement('li');
+                        li.textContent = c.nome;
+                        // O que acontece quando clica na sugestão
+                        li.onclick = () => {
+                            inputBusca.value = c.nome; // Preenche o input com o nome exato
+                            listaSugestoes.classList.add('escondido'); // Esconde a lista
+                        };
+                        listaSugestoes.appendChild(li);
+                    });
+                } else {
+                    listaSugestoes.classList.add('escondido');
+                }
+            });
+
+            // Esconde a lista se clicar fora do campo
+            document.addEventListener('click', function(e) {
+                if (e.target !== inputBusca && e.target !== listaSugestoes) {
+                    listaSugestoes.classList.add('escondido');
+                }
+            });
+        };
+
+        // --- GESTÃO DE CLIENTES ---
+        window.buscarClientes = async function() {
+            document.getElementById('status-conexao').textContent = "(Atualizando clientes...)";
+            try {
+                const q = query(collection(db, "clientes"), orderBy("nome"));
+                const querySnapshot = await getDocs(q);
+                
+                listaClientesCache = [];
+                querySnapshot.forEach((doc) => {
+                    listaClientesCache.push({ id: doc.id, nome: doc.data().nome });
+                });
+
+                window.atualizarTabelaClientes();
+            } catch (e) {
+                console.error("Erro ao buscar clientes: ", e);
+            } finally {
+                document.getElementById('status-conexao').textContent = "";
+            }
+        };
+
+        window.atualizarTabelaClientes = function() {
+            const tbodyClientes = document.querySelector('#tabela-lista-clientes tbody');
+            tbodyClientes.innerHTML = '';
+
+            if (listaClientesCache.length === 0) {
+                tbodyClientes.innerHTML = '<tr><td>Nenhum cliente cadastrado ainda.</td></tr>';
+            } else {
+                listaClientesCache.forEach(cliente => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${cliente.nome}</td>`;
+                    tbodyClientes.appendChild(tr);
+                });
+            }
+        };
+
+        window.cadastrarCliente = async function() {
+            const inputNome = document.getElementById('novo-cliente-nome');
+            const nome = inputNome.value.trim();
+
+            if (!nome) {
+                alert("Por favor, digite o nome do cliente.");
+                return;
+            }
+
+            document.getElementById('status-conexao').textContent = "(Salvando cliente...)";
+            
+            try {
+                await addDoc(collection(db, "clientes"), { nome: nome });
+                inputNome.value = ''; 
+                alert("Cliente cadastrado com sucesso!");
+                await window.buscarClientes(); 
+            } catch (e) {
+                console.error("Erro ao cadastrar cliente: ", e);
+                alert("Erro ao cadastrar. Verifique a conexão.");
+            } finally {
+                document.getElementById('status-conexao').textContent = "";
+            }
+        };
+
+        // --- PAGAMENTO ---
+        window.processarPagamento = async function(metodo) {
+            if (carrinho.length === 0) {
+                alert('O carrinho está vazio! Selecione os produtos primeiro.'); 
+                return;
+            }
+
+            const inputBusca = document.getElementById('busca-cliente');
+            const nomeDigitado = inputBusca.value.trim();
+
+            if (!nomeDigitado) {
+                alert('ATENÇÃO: Você precisa pesquisar e informar o Cliente antes de finalizar a venda.');
+                inputBusca.focus();
+                return;
+            }
+
+            // Validação de segurança: Verifica se o nome digitado realmente existe no banco
+            const clienteValido = listaClientesCache.find(c => c.nome.toLowerCase() === nomeDigitado.toLowerCase());
+            
+            if (!clienteValido) {
+                alert('CLIENTE NÃO ENCONTRADO! Por favor, clique no nome do cliente na lista de sugestões. Se for um cliente novo, cadastre-o na aba "Clientes".');
+                inputBusca.focus();
+                return;
+            }
+
+            // Usa o nome exato do banco (corrigindo maiúsculas/minúsculas)
+            const clienteSelecionado = clienteValido.nome;
+
+            document.getElementById('status-conexao').textContent = "(Salvando venda na nuvem...)";
+
+            const venda = {
+                data: new Date().toLocaleString('pt-BR'),
+                cliente: clienteSelecionado,
+                metodoPagamento: metodo,
+                total: total
+            };
+
+            try {
+                await addDoc(collection(db, "vendas"), venda);
+                alert(`Venda salva na nuvem com sucesso!\nCliente: ${clienteSelecionado}\nMétodo: ${metodo}\nTotal: R$ ${total.toFixed(2).replace('.', ',')}`);
+                
+                // Reseta o caixa
+                carrinho = [];
+                window.atualizarCarrinho();
+                inputBusca.value = ''; // Reseta o campo de pesquisa
+            } catch (e) {
+                console.error("Erro ao salvar venda: ", e);
+                alert("Erro ao salvar a venda.");
+            } finally {
+                document.getElementById('status-conexao').textContent = "";
+            }
+        };
+
+        // --- NAVEGAÇÃO E RELATÓRIOS ---
+        window.alternarTela = function(tela) {
+            document.getElementById('tela-caixa').classList.add('escondido');
+            document.getElementById('tela-clientes').classList.add('escondido');
+            document.getElementById('tela-relatorios').classList.add('escondido');
+
+            if (tela === 'caixa') {
+                document.getElementById('tela-caixa').classList.remove('escondido');
+            } else if (tela === 'clientes') {
+                document.getElementById('tela-clientes').classList.remove('escondido');
+            } else if (tela === 'relatorios') {
+                document.getElementById('tela-relatorios').classList.remove('escondido');
+                window.gerarRelatorios();
+            }
+        };
+
+        window.gerarRelatorios = async function() {
+            document.getElementById('status-conexao').textContent = "(Buscando vendas na nuvem...)";
+            
+            let totalRecebido = 0; let totalPendurado = 0; const contasClientes = {};
+            const tbodyHistorico = document.querySelector('#tabela-historico tbody');
+            const tbodyFiados = document.querySelector('#tabela-fiados tbody');
+            
+            tbodyHistorico.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+            tbodyFiados.innerHTML = '<tr><td colspan="2">Carregando...</td></tr>';
+
+            try {
+                const querySnapshot = await getDocs(collection(db, "vendas"));
+                tbodyHistorico.innerHTML = ''; tbodyFiados.innerHTML = '';
+                
+                querySnapshot.forEach((doc) => {
+                    const venda = doc.data();
+                    if (venda.metodoPagamento === 'Pendurado') {
+                        totalPendurado += venda.total;
+                        contasClientes[venda.cliente] = (contasClientes[venda.cliente] || 0) + venda.total;
+                    } else {
+                        totalRecebido += venda.total;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${venda.data}</td><td>${venda.metodoPagamento}</td><td>${venda.cliente}</td><td>R$ ${venda.total.toFixed(2).replace('.', ',')}</td>`;
+                    tbodyHistorico.appendChild(tr);
+                });
+
+                document.getElementById('rel-total-recebido').textContent = `R$ ${totalRecebido.toFixed(2).replace('.', ',')}`;
+                document.getElementById('rel-total-pendurado').textContent = `R$ ${totalPendurado.toFixed(2).replace('.', ',')}`;
+
+                if (Object.keys(contasClientes).length === 0) {
+                    tbodyFiados.innerHTML = '<tr><td colspan="2">Nenhuma conta pendurada.</td></tr>';
+                } else {
+                    for (const cliente in contasClientes) {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `<td>${cliente}</td><td style="color: #e74c3c; font-weight: bold;">R$ ${contasClientes[cliente].toFixed(2).replace('.', ',')}</td>`;
+                        tbodyFiados.appendChild(tr);
+                    }
+                }
+            } catch(e) {
+                console.error("Erro ao buscar vendas: ", e);
+                tbodyHistorico.innerHTML = '<tr><td colspan="4">Erro ao carregar relatórios.</td></tr>';
+            } finally {
+                document.getElementById('status-conexao').textContent = "";
+            }
+        };
+
+        window.limparDadosVendas = async function() {
+            if(confirm("ATENÇÃO: Isso apagará o histórico de VENDAS do banco de dados (os clientes não serão apagados). Tem certeza?")) {
+                document.getElementById('status-conexao').textContent = "(Apagando vendas...)";
+                try {
+                    const querySnapshot = await getDocs(collection(db, "vendas"));
+                    querySnapshot.forEach(async (documento) => {
+                        await deleteDoc(doc(db, "vendas", documento.id));
+                    });
+                    alert("Comandos de exclusão de vendas enviados ao banco.");
+                    setTimeout(() => window.gerarRelatorios(), 2000); 
+                } catch(e) {
+                    console.error("Erro ao apagar vendas: ", e);
+                } finally {
+                    document.getElementById('status-conexao').textContent = "";
+                }
+            }
+        };
+
+        // Inicia o Layout
+        window.iniciarSistema();
+    </script>
+</body>
+</html>
